@@ -1,0 +1,464 @@
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+/* 강제 다크모드 클래스 (토글용) */
+:root.dark {
+  /* 일반 변수들 */
+  --text: #9ca3af;
+  --text-h: #f3f4f6;
+  --bg: #16171d;
+  --border: #2e303a;
+  --code-bg: #1f2028;
+  --accent: #c084fc;
+  --accent-bg: rgba(192,132,252,0.15);
+  --accent-border: rgba(192,132,252,0.5);
+  --social-bg: rgba(47,48,58,0.5);
+
+  /* LocalHub 전용 변수(overrides) */
+  --color-primary: #9a7cff;
+  --color-primary-light: #7ba7f7;
+  --color-primary-bg: rgba(122,93,255,0.08);
+  --color-bg: #0f1115;
+  --color-card: #121316;
+  --color-text: #e6e6e9;
+  --color-text-muted: #9aa0a6;
+  --color-border: #232327;
+
+  /* 그림자 등 */
+  --shadow: 0 6px 20px rgba(0,0,0,0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#app {
+  width: 100%;
+  margin: 0 auto;
+  min-height: 100svh;
+  box-sizing: border-box;
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+
+/* ===== LocalHub 프로젝트 전용 스타일 ===== */
+:root {
+  --color-primary: #2f6fed;
+  --color-primary-light: #7ba7f7;
+  --color-primary-bg: #eaf1fd;
+  --color-bg: #f8f9fb;
+  --color-card: #ffffff;
+  --color-text: #2d3436;
+  --color-text-muted: #7f8c8d;
+  --color-border: #e8eaed;
+  --radius: 12px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.home {
+  background: var(--color-bg);
+  min-height: 100vh;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--color-text);
+}
+/* =========================================================
+ * 다크 모드 가독성 보정
+ * - 달력의 연/월
+ * - 선택 날짜 축제명
+ * - 진행 중 축제명
+ * - 커뮤니티 제목
+ * ========================================================= */
+
+/* 달력 연도/월은 기존의 고정 검정색 대신 다크 모드용 밝은 글자를 사용한다. */
+html.dark .calendar-header__month {
+  color: #f3f4f6 !important;
+}
+
+/* 달력 내부 날짜 영역도 다크 배경에 맞춰 통일한다. */
+html.dark .calendar-week {
+  background: #17191f !important;
+  border-color: #30323a !important;
+}
+
+html.dark .calendar-day {
+  color: #e5e7eb !important;
+  background: #17191f !important;
+  border-right-color: #2a2d35 !important;
+}
+
+html.dark .calendar-day:hover {
+  background: #20232b !important;
+}
+
+html.dark .calendar-day--muted {
+  background: #121419 !important;
+}
+
+html.dark .calendar-day--selected {
+  background: #232b3d !important;
+}
+
+html.dark .calendar-day__number {
+  color: #e5e7eb !important;
+}
+
+html.dark .calendar-day--muted .calendar-day__number {
+  color: #6b7280 !important;
+}
+
+html.dark .calendar-header__nav:hover {
+  background: rgba(79, 141, 247, 0.14) !important;
+}
+
+html.dark .calendar-today {
+  color: #e5e7eb !important;
+  background: #1a1c22 !important;
+  border-color: #343741 !important;
+}
+
+html.dark .calendar-today:hover {
+  background: #242731 !important;
+}
+
+html.dark .calendar-week__more {
+  color: #d1d5db !important;
+  background: rgba(24, 26, 32, 0.94) !important;
+}
+
+/* 선택 날짜 축제 카드: 밝은 카드 + 밝은 글자 조합을 제거한다. */
+html.dark .festival-calendar__item {
+  background: #1a1c22 !important;
+  border-color: #30323a !important;
+}
+
+html.dark .festival-calendar__item-title {
+  color: #f3f4f6 !important;
+}
+
+html.dark .festival-calendar__item-place {
+  color: #b5bac4 !important;
+}
+
+html.dark .festival-calendar__count {
+  background: rgba(154, 124, 255, 0.16) !important;
+}
+
+/* 진행 중 축제 카드도 같은 방식으로 가독성을 맞춘다. */
+html.dark .ongoing__item {
+  background: #1a1c22 !important;
+  border-color: #30323a !important;
+}
+
+html.dark .ongoing__title {
+  color: #f3f4f6 !important;
+}
+
+html.dark .ongoing__place {
+  color: #b5bac4 !important;
+}
+
+html.dark .ongoing__count {
+  background: rgba(154, 124, 255, 0.16) !important;
+}
+
+html.dark .ongoing__more {
+  color: #b9a7ff !important;
+  background: #1a1c22 !important;
+  border-color: #9a7cff !important;
+}
+
+html.dark .ongoing__more:hover {
+  background: #242130 !important;
+}
+
+/*
+ * 현재 커뮤니티 화면은 흰색 보드 디자인을 유지하므로,
+ * 다크 모드에서도 이 영역만 light color-scheme을 사용한다.
+ * 전역 h2의 밝은 글자가 흰 배경 위에 올라가는 문제를 막는다.
+ */
+html.dark .board-container {
+  color: #2d3748 !important;
+  color-scheme: light;
+}
+
+html.dark .board-container .panel-header h2,
+html.dark .board-container .form-container h3,
+html.dark .board-container .detail-panel h2,
+html.dark .board-container .comment-section h3 {
+  color: #1f2937 !important;
+}
