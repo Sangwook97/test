@@ -173,6 +173,14 @@ function getFestivalColor(seed) {
   return BAR_COLORS[hash % BAR_COLORS.length]
 }
 
+function getNaverSearchUrl(festival) {
+  const title = String(festival?.title || '').trim()
+  const place = String(festival?.eventplace || festival?.addr1 || '').trim()
+  const query = [title, place].filter(Boolean).join(' ')
+
+  return `https://search.naver.com/search.naver?query=${encodeURIComponent(query)}`
+}
+
 /*
  * 전체 축제 데이터.
  * 특정 날짜 상세 목록에는 6개월 이상 행사도 포함된다.
@@ -508,27 +516,35 @@ function selectSegmentDate(week, segment) {
           :key="festival._key"
           class="festival-calendar__item"
         >
-          <span
-            class="festival-calendar__item-color"
-            :style="{ backgroundColor: festival._color }"
-            aria-hidden="true"
-          ></span>
+          <a
+            class="festival-calendar__item-link"
+            :href="getNaverSearchUrl(festival)"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="`${festival.title || t('calendar.noFestivalTitle')} - 네이버 검색`"
+          >
+            <span
+              class="festival-calendar__item-color"
+              :style="{ backgroundColor: festival._color }"
+              aria-hidden="true"
+            ></span>
 
-          <div class="festival-calendar__item-content">
-            <strong class="festival-calendar__item-title">
-              {{ festival.title || t('calendar.noFestivalTitle') }}
-            </strong>
+            <div class="festival-calendar__item-content">
+              <strong class="festival-calendar__item-title">
+                {{ festival.title || t('calendar.noFestivalTitle') }}
+              </strong>
 
-            <span class="festival-calendar__item-date">
-              {{ formatDate(festival.eventstartdate) }}
-              ~
-              {{ formatDate(festival.eventenddate || festival.eventstartdate) }}
-            </span>
+              <span class="festival-calendar__item-date">
+                {{ formatDate(festival.eventstartdate) }}
+                ~
+                {{ formatDate(festival.eventenddate || festival.eventstartdate) }}
+              </span>
 
-            <span class="festival-calendar__item-place">
-              {{ festival.eventplace || festival.addr1 || t('calendar.noPlace') }}
-            </span>
-          </div>
+              <span class="festival-calendar__item-place">
+                {{ festival.eventplace || festival.addr1 || t('calendar.noPlace') }}
+              </span>
+            </div>
+          </a>
         </li>
       </ul>
     </section>
@@ -850,12 +866,32 @@ function selectSegmentDate(week, segment) {
 
 .festival-calendar__item {
   position: relative;
-  display: flex;
   min-width: 0;
   overflow: hidden;
   background: #f8fafc;
   border: 1px solid #e5eaf0;
   border-radius: 9px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.festival-calendar__item:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary, #6366f1);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+}
+
+.festival-calendar__item-link {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.festival-calendar__item-link:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.35);
+  outline-offset: -3px;
 }
 
 .festival-calendar__item-color {

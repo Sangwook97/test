@@ -96,6 +96,14 @@ function toggleShowAll() {
   showAll.value = !showAll.value
 }
 
+function getNaverSearchUrl(festival) {
+  const title = String(festival?.title || '').trim()
+  const place = String(festival?.eventplace || festival?.addr1 || '').trim()
+  const query = [title, place].filter(Boolean).join(' ')
+
+  return `https://search.naver.com/search.naver?query=${encodeURIComponent(query)}`
+}
+
 function formatDate(value) {
   const date = parseDate(value)
 
@@ -165,29 +173,37 @@ function getRemainingDays(value) {
         :key="festival.contentid || `${festival.title}-${index}`"
         class="ongoing__item"
       >
-        <div class="ongoing__item-header">
-          <strong class="ongoing__title">
-            {{ festival.title || t('ongoing.noFestivalTitle') }}
-          </strong>
+        <a
+          class="ongoing__link"
+          :href="getNaverSearchUrl(festival)"
+          target="_blank"
+          rel="noopener noreferrer"
+          :aria-label="`${festival.title || t('ongoing.noFestivalTitle')} - 네이버 검색`"
+        >
+          <div class="ongoing__item-header">
+            <strong class="ongoing__title">
+              {{ festival.title || t('ongoing.noFestivalTitle') }}
+            </strong>
 
-          <span class="ongoing__remaining">
-            {{
-              getRemainingDays(
-                festival.eventenddate || festival.eventstartdate,
-              )
-            }}
+            <span class="ongoing__remaining">
+              {{
+                getRemainingDays(
+                  festival.eventenddate || festival.eventstartdate,
+                )
+              }}
+            </span>
+          </div>
+
+          <span class="ongoing__date">
+            {{ formatDate(festival.eventstartdate) }}
+            ~
+            {{ formatDate(festival.eventenddate || festival.eventstartdate) }}
           </span>
-        </div>
 
-        <span class="ongoing__date">
-          {{ formatDate(festival.eventstartdate) }}
-          ~
-          {{ formatDate(festival.eventenddate || festival.eventstartdate) }}
-        </span>
-
-        <span class="ongoing__place">
-          {{ festival.eventplace || festival.addr1 || t('ongoing.noPlace') }}
-        </span>
+          <span class="ongoing__place">
+            {{ festival.eventplace || festival.addr1 || t('ongoing.noPlace') }}
+          </span>
+        </a>
       </li>
     </ul>
 
@@ -265,14 +281,37 @@ function getRemainingDays(value) {
 }
 
 .ongoing__item {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
   min-width: 0;
-  padding: 15px;
+  padding: 0;
+  overflow: hidden;
   background: #f8fafc;
   border: 1px solid var(--color-border, #e2e8f0);
   border-radius: 9px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.ongoing__item:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary, #6366f1);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+}
+
+.ongoing__link {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 15px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ongoing__link:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.35);
+  outline-offset: -3px;
 }
 
 .ongoing__item-header {
