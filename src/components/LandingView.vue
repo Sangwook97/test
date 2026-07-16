@@ -228,4 +228,77 @@ const enterLabel = computed(() => {
     font-size: 24px;
   }
 }
+
+.landing {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* 화면 전체 높이 고정 */
+  padding: 40px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* 배경 이미지를 ::before에서 처리하여 스케일 애니메이션 적용 */
+.landing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  /* 그라데이션 + 이미지: 보랏빛 계열 어두운 톤 그라데이션을 먼저 넣음 */
+  background-image:
+    linear-gradient(180deg, rgba(12,8,30,0.62), rgba(60,20,110,0.25)),
+    url("/landing-bg.png");
+  background-size: cover;
+  background-position: center; /* 필요시 center 40% 등으로 조정 */
+  background-repeat: no-repeat;
+
+  transform-origin: center;
+  will-change: transform, opacity;
+  animation: landingFadeZoom 10s ease both;
+}
+
+/* 추가 오버레이(선명도/대비 보강), 카드보다 아래에 위치 */
+.landing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(8,6,18,0.35), rgba(40,14,90,0.18));
+}
+
+/* 카드가 이미지/오버레이 위에 보이도록 z-index 조정 */
+.landing__card {
+  z-index: 2;
+}
+
+/* 로딩 시 페이드인 + 아주 살짝 확대되는 애니메이션 */
+@keyframes landingFadeZoom {
+  from {
+    opacity: 0;
+    transform: scale(1);
+  }
+  10% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.03); /* 아주 살짝 확대 */
+  }
+}
+
+/* 반응형: 작은 화면에서 중요 랜드마크가 잘리고 있다면 포지션을 위쪽으로 옮김 */
+@media (max-width: 768px) {
+  .landing::before {
+    background-position: center 35%; /* 필요시 수치 보정 */
+  }
+
+  .landing {
+    padding: 24px 12px;
+  }
+}
 </style>
