@@ -2,252 +2,158 @@ const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
 const OPENAI_MODEL = import.meta.env.VITE_OPENAI_MODEL || 'gpt-5-mini'
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses'
 
+function createDataset(type, ko, en, file, keywords) {
+  return {
+    type,
+    label: { ko, en },
+    file,
+    keywords: keywords.split('|'),
+  }
+}
+
 const DATASETS = [
+  createDataset(
+    '관광지',
+    '관광지',
+    'tourist attractions',
+    '서울_관광지.json',
+    '관광지|관광|명소|가볼만한 곳|가볼 만한 곳|가볼 곳|공원|데이트|카페거리|카페 거리|attraction|attractions|tourist attraction|tourism|sightseeing|landmark|landmarks|palace|park|places to visit|cafe street',
+  ),
+  createDataset(
+    '문화시설',
+    '문화시설',
+    'cultural facilities',
+    '서울_문화시설.json',
+    '문화시설|문화|박물관|미술관|갤러리|전시|공연장|극장|cultural facility|cultural facilities|museum|museums|art museum|gallery|exhibition|theater|theatre',
+  ),
+  createDataset(
+    '축제공연행사',
+    '축제공연행사',
+    'festivals and events',
+    '서울_축제공연행사.json',
+    '축제|공연|행사|페스티벌|이벤트|festival|festivals|event|events|performance|concert',
+  ),
+  createDataset(
+    '레포츠',
+    '레포츠',
+    'leisure activities',
+    '서울_레포츠.json',
+    '레포츠|스포츠|운동|둘레길|등산|트레킹|체험|leisure|sports|exercise|hiking|trail|trekking|activity|activities|experience',
+  ),
+  createDataset(
+    '쇼핑',
+    '쇼핑',
+    'shopping places',
+    '서울_쇼핑.json',
+    '쇼핑|시장|백화점|아울렛|상점|매장|기념품|shopping|market|markets|department store|outlet|store|shop|souvenir',
+  ),
+  createDataset(
+    '숙박',
+    '숙박',
+    'accommodation',
+    '서울_숙박.json',
+    '숙박|숙소|호텔|게스트하우스|모텔|한옥스테이|accommodation|hotel|hotels|guesthouse|motel|stay|lodging',
+  ),
+  createDataset(
+    '여행코스',
+    '여행코스',
+    'travel courses',
+    '서울_여행코스.json',
+    '여행코스|여행 코스|코스|일정|동선|당일치기|하루 여행|travel course|travel courses|itinerary|route|day trip|one-day trip',
+  ),
+]
+
+const DISTRICTS = `
+종로구,Jongno-gu,jongno
+중구,Jung-gu,jung
+용산구,Yongsan-gu,yongsan
+성동구,Seongdong-gu,seongdong
+광진구,Gwangjin-gu,gwangjin
+동대문구,Dongdaemun-gu,dongdaemun
+중랑구,Jungnang-gu,jungnang
+성북구,Seongbuk-gu,seongbuk
+강북구,Gangbuk-gu,gangbuk
+도봉구,Dobong-gu,dobong
+노원구,Nowon-gu,nowon
+은평구,Eunpyeong-gu,eunpyeong
+서대문구,Seodaemun-gu,seodaemun
+마포구,Mapo-gu,mapo
+양천구,Yangcheon-gu,yangcheon
+강서구,Gangseo-gu,gangseo
+구로구,Guro-gu,guro
+금천구,Geumcheon-gu,geumcheon
+영등포구,Yeongdeungpo-gu,yeongdeungpo
+동작구,Dongjak-gu,dongjak
+관악구,Gwanak-gu,gwanak
+서초구,Seocho-gu,seocho
+강남구,Gangnam-gu,gangnam
+송파구,Songpa-gu,songpa
+강동구,Gangdong-gu,gangdong
+`
+  .trim()
+  .split('\n')
+  .map((row) => {
+    const [value, en, romanized] = row.split(',')
+
+    return {
+      value,
+      en,
+      aliases: [romanized, `${romanized}-gu`, `${romanized} gu`],
+    }
+  })
+
+const FOOD_KEYWORDS =
+  '맛집|음식|음식점|식당|한식|중식|일식|양식|먹을 곳|restaurant|restaurants|food place|places to eat|eatery|korean food|chinese food|japanese food'.split(
+    '|',
+  )
+
+const PLACE_CONTEXT_PATTERN =
+  /(관광지|관광|명소|가볼\s*만한\s*곳|가볼\s*곳|공원|데이트|카페\s*거리|문화시설|박물관|미술관|갤러리|전시|공연장|극장|축제|공연|행사|페스티벌|레포츠|스포츠|운동|둘레길|등산|트레킹|체험|쇼핑|시장|백화점|아울렛|숙박|숙소|호텔|게스트하우스|모텔|여행\s*코스|당일치기|attractions?|tourism|sightseeing|landmarks?|palaces?|parks?|places?\s+to\s+visit|cultural\s+facilit(?:y|ies)|museums?|galler(?:y|ies)|exhibitions?|theat(?:er|re)s?|festivals?|events?|performances?|concerts?|leisure|sports?|hiking|trails?|trekking|shopping|markets?|outlets?|accommodation|hotels?|guesthouses?|motels?|travel\s+courses?|itinerar(?:y|ies)|routes?|day\s+trips?)/i
+
+const OUT_OF_SCOPE_RULES = [
   {
-    type: '관광지',
-    label: { ko: '관광지', en: 'tourist attractions' },
-    file: '서울_관광지.json',
-    keywords: [
-      '관광지',
-      '관광',
-      '명소',
-      '가볼만한 곳',
-      '가볼 곳',
-      '공원',
-      '데이트',
-      '카페거리',
-      '카페 거리',
-      'attraction',
-      'attractions',
-      'tourist attraction',
-      'tourism',
-      'sightseeing',
-      'landmark',
-      'landmarks',
-      'palace',
-      'park',
-      'places to visit',
-      'cafe street',
-    ],
+    topic: 'weather',
+    pattern:
+      /(날씨|기온|온도|강수\s*확률|일기\s*예보|미세먼지|초미세먼지|weather|temperature|forecast|air\s+quality)/i,
+    allowWithPlaceContext: true,
   },
   {
-    type: '문화시설',
-    label: { ko: '문화시설', en: 'cultural facilities' },
-    file: '서울_문화시설.json',
-    keywords: [
-      '문화시설',
-      '문화',
-      '박물관',
-      '미술관',
-      '갤러리',
-      '전시',
-      '공연장',
-      '극장',
-      'cultural facility',
-      'cultural facilities',
-      'museum',
-      'museums',
-      'art museum',
-      'gallery',
-      'exhibition',
-      'theater',
-      'theatre',
-    ],
+    topic: 'finance',
+    pattern:
+      /(주식|주가|코인|비트코인|가상화폐|환율|증시|stock\s*(?:price|market)?|bitcoin|crypto(?:currency)?|exchange\s+rate)/i,
   },
   {
-    type: '축제공연행사',
-    label: { ko: '축제공연행사', en: 'festivals and events' },
-    file: '서울_축제공연행사.json',
-    keywords: [
-      '축제',
-      '공연',
-      '행사',
-      '페스티벌',
-      '이벤트',
-      'festival',
-      'festivals',
-      'event',
-      'events',
-      'performance',
-      'concert',
-    ],
+    topic: 'news',
+    pattern:
+      /(뉴스|속보|시사|정치|선거|대통령|news|breaking\s+news|politics|election)/i,
   },
   {
-    type: '레포츠',
-    label: { ko: '레포츠', en: 'leisure activities' },
-    file: '서울_레포츠.json',
-    keywords: [
-      '레포츠',
-      '스포츠',
-      '운동',
-      '둘레길',
-      '등산',
-      '트레킹',
-      '체험',
-      'leisure',
-      'sports',
-      'exercise',
-      'hiking',
-      'trail',
-      'trekking',
-      'activity',
-      'activities',
-      'experience',
-    ],
+    topic: 'calculation',
+    pattern:
+      /(계산해\s*줘|계산해\s*주세요|방정식|미분|적분|수학\s*문제|calculate|calculation|differentiat(?:e|ion)|integrat(?:e|ion))/i,
   },
   {
-    type: '쇼핑',
-    label: { ko: '쇼핑', en: 'shopping places' },
-    file: '서울_쇼핑.json',
-    keywords: [
-      '쇼핑',
-      '시장',
-      '백화점',
-      '아울렛',
-      '상점',
-      '매장',
-      '기념품',
-      'shopping',
-      'market',
-      'markets',
-      'department store',
-      'outlet',
-      'store',
-      'shop',
-      'souvenir',
-    ],
+    topic: 'translation',
+    pattern:
+      /(번역해\s*줘|번역해\s*주세요|영어로\s*번역|한국어로\s*번역|translate\s+(?:this|it|to))/i,
   },
   {
-    type: '숙박',
-    label: { ko: '숙박', en: 'accommodation' },
-    file: '서울_숙박.json',
-    keywords: [
-      '숙박',
-      '숙소',
-      '호텔',
-      '게스트하우스',
-      '모텔',
-      '한옥스테이',
-      'accommodation',
-      'hotel',
-      'hotels',
-      'guesthouse',
-      'motel',
-      'stay',
-      'lodging',
-    ],
+    topic: 'programming',
+    pattern:
+      /(코딩|프로그래밍|파이썬|자바스크립트|자바\s*코드|알고리즘\s*문제|coding|programming|python\s+code|javascript\s+code|java\s+code)/i,
   },
   {
-    type: '여행코스',
-    label: { ko: '여행코스', en: 'travel courses' },
-    file: '서울_여행코스.json',
-    keywords: [
-      '여행코스',
-      '코스',
-      '일정',
-      '동선',
-      '당일치기',
-      '하루 여행',
-      'travel course',
-      'travel courses',
-      'itinerary',
-      'route',
-      'day trip',
-      'one-day trip',
-    ],
+    topic: 'time',
+    pattern:
+      /(지금\s*몇\s*시|현재\s*시간|오늘\s*날짜|무슨\s*요일|what\s+time\s+is\s+it|current\s+time|today'?s\s+date|what\s+day\s+is\s+it)/i,
   },
 ]
 
-const DISTRICTS = [
-  { value: '종로구', en: 'Jongno-gu', aliases: ['jongno-gu', 'jongno gu', 'jongno'] },
-  { value: '중구', en: 'Jung-gu', aliases: ['jung-gu', 'jung gu'] },
-  { value: '용산구', en: 'Yongsan-gu', aliases: ['yongsan-gu', 'yongsan gu', 'yongsan'] },
-  { value: '성동구', en: 'Seongdong-gu', aliases: ['seongdong-gu', 'seongdong gu', 'seongdong'] },
-  { value: '광진구', en: 'Gwangjin-gu', aliases: ['gwangjin-gu', 'gwangjin gu', 'gwangjin'] },
-  { value: '동대문구', en: 'Dongdaemun-gu', aliases: ['dongdaemun-gu', 'dongdaemun gu', 'dongdaemun'] },
-  { value: '중랑구', en: 'Jungnang-gu', aliases: ['jungnang-gu', 'jungnang gu', 'jungnang'] },
-  { value: '성북구', en: 'Seongbuk-gu', aliases: ['seongbuk-gu', 'seongbuk gu', 'seongbuk'] },
-  { value: '강북구', en: 'Gangbuk-gu', aliases: ['gangbuk-gu', 'gangbuk gu', 'gangbuk'] },
-  { value: '도봉구', en: 'Dobong-gu', aliases: ['dobong-gu', 'dobong gu', 'dobong'] },
-  { value: '노원구', en: 'Nowon-gu', aliases: ['nowon-gu', 'nowon gu', 'nowon'] },
-  { value: '은평구', en: 'Eunpyeong-gu', aliases: ['eunpyeong-gu', 'eunpyeong gu', 'eunpyeong'] },
-  { value: '서대문구', en: 'Seodaemun-gu', aliases: ['seodaemun-gu', 'seodaemun gu', 'seodaemun'] },
-  { value: '마포구', en: 'Mapo-gu', aliases: ['mapo-gu', 'mapo gu', 'mapo'] },
-  { value: '양천구', en: 'Yangcheon-gu', aliases: ['yangcheon-gu', 'yangcheon gu', 'yangcheon'] },
-  { value: '강서구', en: 'Gangseo-gu', aliases: ['gangseo-gu', 'gangseo gu', 'gangseo'] },
-  { value: '구로구', en: 'Guro-gu', aliases: ['guro-gu', 'guro gu', 'guro'] },
-  { value: '금천구', en: 'Geumcheon-gu', aliases: ['geumcheon-gu', 'geumcheon gu', 'geumcheon'] },
-  { value: '영등포구', en: 'Yeongdeungpo-gu', aliases: ['yeongdeungpo-gu', 'yeongdeungpo gu', 'yeongdeungpo'] },
-  { value: '동작구', en: 'Dongjak-gu', aliases: ['dongjak-gu', 'dongjak gu', 'dongjak'] },
-  { value: '관악구', en: 'Gwanak-gu', aliases: ['gwanak-gu', 'gwanak gu', 'gwanak'] },
-  { value: '서초구', en: 'Seocho-gu', aliases: ['seocho-gu', 'seocho gu', 'seocho'] },
-  { value: '강남구', en: 'Gangnam-gu', aliases: ['gangnam-gu', 'gangnam gu', 'gangnam'] },
-  { value: '송파구', en: 'Songpa-gu', aliases: ['songpa-gu', 'songpa gu', 'songpa'] },
-  { value: '강동구', en: 'Gangdong-gu', aliases: ['gangdong-gu', 'gangdong gu', 'gangdong'] },
-]
-
-const FOOD_KEYWORDS = [
-  '맛집',
-  '음식',
-  '음식점',
-  '식당',
-  '한식',
-  '중식',
-  '일식',
-  '양식',
-  '먹을 곳',
-  'restaurant',
-  'restaurants',
-  'food place',
-  'places to eat',
-  'eatery',
-  'korean food',
-  'chinese food',
-  'japanese food',
-]
-
-const STOP_WORDS = new Set([
-  '서울',
-  '서울시',
-  '서울특별시',
-  '지역',
-  '장소',
-  '정보',
-  '추천',
-  '추천해줘',
-  '추천해주세요',
-  '알려줘',
-  '알려주세요',
-  '찾아줘',
-  '찾아주세요',
-  '어디',
-  '있는',
-  '있나요',
-  '가볼만한',
-  '제공된',
-  '데이터',
-  '정확히',
-  '서로',
-  '다른',
-  'seoul',
-  'recommend',
-  'recommended',
-  'recommendation',
-  'recommendations',
-  'find',
-  'show',
-  'tell',
-  'please',
-  'place',
-  'places',
-  'information',
-  'near',
-  'nearby',
-  'in',
-  'the',
-  'a',
-  'an',
-])
+const STOP_WORDS = new Set(
+  '서울|서울시|서울특별시|지역|장소|정보|추천|추천해줘|추천해주세요|알려줘|알려주세요|찾아줘|찾아주세요|어디|있는|있나요|가볼만한|제공된|데이터|정확히|서로|다른|seoul|recommend|recommended|recommendation|recommendations|find|show|tell|please|place|places|information|near|nearby|in|the|a|an'.split(
+    '|',
+  ),
+)
 
 const TOKEN_ALIASES = {
   attraction: ['관광지', '명소'],
@@ -300,12 +206,45 @@ function extractOriginalQuestion(value) {
   return match?.[1]?.trim() || text
 }
 
-function containsFoodKeyword(question) {
+function includesKeyword(question, keywords) {
   const normalizedQuestion = String(question || '').toLowerCase()
 
-  return FOOD_KEYWORDS.some((keyword) => {
+  return keywords.some((keyword) => {
     return normalizedQuestion.includes(keyword.toLowerCase())
   })
+}
+
+function containsFoodKeyword(question) {
+  return includesKeyword(question, FOOD_KEYWORDS)
+}
+
+function detectOutOfScopeTopic(question) {
+  const normalizedQuestion = String(question || '').trim()
+
+  for (const rule of OUT_OF_SCOPE_RULES) {
+    if (!rule.pattern.test(normalizedQuestion)) {
+      continue
+    }
+
+    if (
+      rule.allowWithPlaceContext &&
+      PLACE_CONTEXT_PATTERN.test(normalizedQuestion)
+    ) {
+      continue
+    }
+
+    return rule.topic
+  }
+
+  return null
+}
+
+function createOutOfScopeMessage(language) {
+  return textByLanguage(
+    language,
+    '죄송하지만 LocalHub 챗봇은 서울의 관광지, 문화시설, 축제, 레포츠, 쇼핑, 숙박, 여행코스 정보만 안내할 수 있습니다.\n예: 노원구 관광지, 종로구 박물관, 마포구 쇼핑',
+    'Sorry, the LocalHub chatbot only answers questions about Seoul attractions, cultural facilities, festivals, leisure activities, shopping, accommodation, and travel courses.\nExamples: Nowon-gu attractions, Jongno-gu museums, Mapo-gu shopping',
+  )
 }
 
 function detectDistrict(question) {
@@ -319,7 +258,10 @@ function detectDistrict(question) {
 
     const shortKoreanName = district.value.replace(/구$/, '')
 
-    if (shortKoreanName.length >= 2 && originalText.includes(shortKoreanName)) {
+    if (
+      shortKoreanName.length >= 2 &&
+      originalText.includes(shortKoreanName)
+    ) {
       return district
     }
 
@@ -332,12 +274,8 @@ function detectDistrict(question) {
 }
 
 function detectDataset(question) {
-  const normalizedQuestion = String(question || '').toLowerCase()
-
   return DATASETS.find((dataset) => {
-    return dataset.keywords.some((keyword) => {
-      return normalizedQuestion.includes(keyword.toLowerCase())
-    })
+    return includesKeyword(question, dataset.keywords)
   })
 }
 
@@ -411,11 +349,9 @@ async function findDistrictRecommendations(question, language) {
     return null
   }
 
-  const dataset = detectDataset(question) || DATASETS.find((item) => item.type === '관광지')
-
-  if (!dataset) {
-    return null
-  }
+  const dataset =
+    detectDataset(question) ||
+    DATASETS.find((item) => item.type === '관광지')
 
   const loadedDataset = await loadDataset(dataset, language)
   const recommendations = []
@@ -443,10 +379,9 @@ async function findDistrictRecommendations(question, language) {
     }
   }
 
-  const districtLabel = normalizeLanguage(language) === 'en'
-    ? district.en
-    : district.value
-  const categoryLabel = dataset.label[normalizeLanguage(language)]
+  const selectedLanguage = normalizeLanguage(language)
+  const districtLabel = selectedLanguage === 'en' ? district.en : district.value
+  const categoryLabel = dataset.label[selectedLanguage]
 
   if (recommendations.length === 0) {
     return textByLanguage(
@@ -489,9 +424,9 @@ function extractSearchTokens(question) {
 
   const expandedTokens = [...rawTokens]
 
-  rawTokens.forEach((token) => {
+  for (const token of rawTokens) {
     expandedTokens.push(...(TOKEN_ALIASES[token] || []))
-  })
+  }
 
   return [...new Set(expandedTokens)]
 }
@@ -533,7 +468,8 @@ function calculateScore(item, category, tokens, district) {
     }
   }
 
-  if (item?.firstimage) {
+  // 이미지 점수는 실제 검색어 또는 지역이 일치한 경우에만 적용합니다.
+  if (score > 0 && item?.firstimage) {
     score += 1
   }
 
@@ -550,19 +486,19 @@ function normalizeItem(item, category) {
     latitude: String(item?.mapy || '').trim(),
   }
 
-  if (category === '축제공연행사') {
-    return {
-      ...normalizedItem,
-      eventStartDate: item?.eventstartdate || '',
-      eventEndDate: item?.eventenddate || '',
-      eventPlace: item?.eventplace || '',
-      playTime: item?.playtime || '',
-      program: item?.program || '',
-      fee: item?.usetimefestival || '',
-    }
+  if (category !== '축제공연행사') {
+    return normalizedItem
   }
 
-  return normalizedItem
+  return {
+    ...normalizedItem,
+    eventStartDate: item?.eventstartdate || '',
+    eventEndDate: item?.eventenddate || '',
+    eventPlace: item?.eventplace || '',
+    playTime: item?.playtime || '',
+    program: item?.program || '',
+    fee: item?.usetimefestival || '',
+  }
 }
 
 async function getCandidateItems(question, language) {
@@ -575,16 +511,19 @@ async function getCandidateItems(question, language) {
     targetDatasets.map(async (dataset) => {
       const loadedDataset = await loadDataset(dataset, language)
 
-      const scoredItems = loadedDataset.items
+      const matchedItems = loadedDataset.items
         .map((item, index) => ({
           item,
           index,
           score: calculateScore(item, dataset.type, tokens, district),
         }))
-        .filter(({ item }) => Boolean(item?.title) && Boolean(createAddress(item)))
-
-      const matchedItems = scoredItems
-        .filter(({ score }) => score > 0)
+        .filter(({ item, score }) => {
+          return (
+            score > 0 &&
+            Boolean(item?.title) &&
+            Boolean(createAddress(item))
+          )
+        })
         .sort((first, second) => {
           if (second.score !== first.score) {
             return second.score - first.score
@@ -593,10 +532,10 @@ async function getCandidateItems(question, language) {
           return first.index - second.index
         })
 
-      const sourceItems = matchedItems.length > 0 ? matchedItems : scoredItems
       const limit = targetDatasets.length === 1 ? 25 : 5
 
-      return sourceItems
+      // 일치 항목이 없을 때 데이터 앞부분을 임의로 반환하지 않습니다.
+      return matchedItems
         .slice(0, limit)
         .map(({ item }) => normalizeItem(item, dataset.type))
     }),
@@ -644,17 +583,17 @@ function createInstructions(language) {
   if (normalizeLanguage(language) === 'en') {
     return `
 You are the LocalHub assistant for Seoul local information.
-
 Select places only from the supplied candidate JSON data.
 
 Rules:
 1. Select exactly three different places that match the question.
 2. For each place, write only its name and location.
 3. Do not select places without an address.
-4. Do not guess any information that is not provided.
-5. Do not add a greeting, recommendation reason, conclusion, or source.
-6. Answer in English, but preserve Korean proper names and Korean addresses exactly as supplied when no official English value is provided.
-7. Use only this format:
+4. Do not guess information that is not provided.
+5. Do not answer unrelated questions such as weather, news, finance, translation, calculation, or programming.
+6. Do not add a greeting, recommendation reason, conclusion, or source.
+7. Answer in English, but preserve Korean proper names and addresses when no official English value is supplied.
+8. Use only this format:
 
 1.
 - Name: Place name
@@ -672,7 +611,6 @@ Rules:
 
   return `
 당신은 서울 지역정보를 안내하는 LocalHub 도우미입니다.
-
 반드시 제공된 후보 JSON 데이터에서만 장소를 선택하세요.
 
 답변 규칙:
@@ -680,8 +618,9 @@ Rules:
 2. 장소마다 이름과 위치만 작성하세요.
 3. 주소가 없는 장소는 선택하지 마세요.
 4. 제공되지 않은 정보는 추측하지 마세요.
-5. 인사말, 추천 이유, 결론, 출처는 작성하지 마세요.
-6. 반드시 아래 형식으로만 작성하세요.
+5. 날씨, 뉴스, 금융, 번역, 계산, 프로그래밍 등 LocalHub와 무관한 질문에는 답하지 마세요.
+6. 인사말, 추천 이유, 결론, 출처는 작성하지 마세요.
+7. 반드시 아래 형식으로만 작성하세요.
 
 1.
 - 이름: 장소명
@@ -708,10 +647,9 @@ async function requestOpenAIAnswer(question, candidateItems, language) {
     )
   }
 
-  const userQuestionLabel = normalizeLanguage(language) === 'en'
-    ? 'User question'
-    : '사용자 질문'
-  const candidateLabel = normalizeLanguage(language) === 'en'
+  const isEnglish = normalizeLanguage(language) === 'en'
+  const userQuestionLabel = isEnglish ? 'User question' : '사용자 질문'
+  const candidateLabel = isEnglish
     ? 'Candidate JSON data'
     : '후보 JSON 데이터'
 
@@ -748,7 +686,7 @@ async function requestOpenAIAnswer(question, candidateItems, language) {
         errorMessage = errorData.error.message
       }
     } catch {
-      // Keep the default error message when the response is not JSON.
+      // JSON이 아닌 오류 응답이면 기본 메시지를 사용합니다.
     }
 
     throw new Error(errorMessage)
@@ -757,29 +695,29 @@ async function requestOpenAIAnswer(question, candidateItems, language) {
   const responseData = await response.json()
   const answer = extractOutputText(responseData)
 
-  if (!answer) {
-    const incompleteReason = responseData?.incomplete_details?.reason
+  if (answer) {
+    return answer
+  }
 
-    if (incompleteReason) {
-      throw new Error(
-        textByLanguage(
-          language,
-          `OpenAI 응답이 완료되지 않았습니다. 사유: ${incompleteReason}`,
-          `The OpenAI response was incomplete. Reason: ${incompleteReason}`,
-        ),
-      )
-    }
+  const incompleteReason = responseData?.incomplete_details?.reason
 
+  if (incompleteReason) {
     throw new Error(
       textByLanguage(
         language,
-        'OpenAI 응답에서 답변 내용을 찾지 못했습니다.',
-        'No answer text was found in the OpenAI response.',
+        `OpenAI 응답이 완료되지 않았습니다. 사유: ${incompleteReason}`,
+        `The OpenAI response was incomplete. Reason: ${incompleteReason}`,
       ),
     )
   }
 
-  return answer
+  throw new Error(
+    textByLanguage(
+      language,
+      'OpenAI 응답에서 답변 내용을 찾지 못했습니다.',
+      'No answer text was found in the OpenAI response.',
+    ),
+  )
 }
 
 export async function askRegionQuestion(question, language = 'ko') {
@@ -809,6 +747,17 @@ export async function askRegionQuestion(question, language = 'ko') {
     }
   }
 
+  // 무관한 질문은 데이터 검색과 OpenAI API 호출 전에 차단합니다.
+  const outOfScopeTopic = detectOutOfScopeTopic(originalQuestion)
+
+  if (outOfScopeTopic) {
+    return {
+      status: 'out_of_scope',
+      error: outOfScopeTopic,
+      text: createOutOfScopeMessage(selectedLanguage),
+    }
+  }
+
   const districtAnswer = await findDistrictRecommendations(
     originalQuestion,
     selectedLanguage,
@@ -821,16 +770,27 @@ export async function askRegionQuestion(question, language = 'ko') {
     }
   }
 
-  const candidateItems = await getCandidateItems(originalQuestion, selectedLanguage)
+  const candidateItems = await getCandidateItems(
+    originalQuestion,
+    selectedLanguage,
+  )
 
   if (candidateItems.length === 0) {
+    const hasLocalInformationContext =
+      Boolean(detectDataset(originalQuestion)) ||
+      Boolean(detectDistrict(originalQuestion)) ||
+      PLACE_CONTEXT_PATTERN.test(originalQuestion) ||
+      /서울|서울시|서울특별시|seoul/i.test(originalQuestion)
+
     return {
-      status: 'no_candidates',
-      text: textByLanguage(
-        selectedLanguage,
-        '제공된 서울 지역정보 데이터에서 관련 장소를 찾지 못했습니다.',
-        'No matching place was found in the provided Seoul local-information data.',
-      ),
+      status: hasLocalInformationContext ? 'no_candidates' : 'out_of_scope',
+      text: hasLocalInformationContext
+        ? textByLanguage(
+            selectedLanguage,
+            '제공된 서울 지역정보 데이터에서 관련 장소를 찾지 못했습니다. 지역구와 카테고리를 함께 입력해 주세요.\n예: 노원구 관광지, 종로구 문화시설',
+            'No matching place was found in the provided Seoul local-information data. Enter a district and category together.\nExamples: Nowon-gu attractions, Jongno-gu cultural facilities',
+          )
+        : createOutOfScopeMessage(selectedLanguage),
     }
   }
 
